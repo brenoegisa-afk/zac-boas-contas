@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, TrendingUp, TrendingDown, DollarSign, Receipt } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import TelegramIntegration from '@/components/Dashboard/TelegramIntegration';
 
 interface DashboardStats {
   totalIncome: number;
@@ -13,6 +14,20 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
+  const [activeSection, setActiveSection] = useState('dashboard');
+
+  // Check URL hash to determine active section
+  useEffect(() => {
+    const hash = window.location.hash.substring(1);
+    if (hash === 'telegram') {
+      setActiveSection('telegram');
+    }
+  }, []);
+
+  if (activeSection === 'telegram') {
+    return <TelegramIntegration />;
+  }
+  
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalIncome: 0,

@@ -1,4 +1,4 @@
-import { Home, Plus, Receipt, TrendingUp, Users, Settings, LogOut } from 'lucide-react';
+import { Home, Plus, Receipt, TrendingUp, Users, Settings, LogOut, MessageCircle } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Sidebar,
@@ -21,6 +21,7 @@ const menuItems = [
   { title: 'Transações', url: '/dashboard/transactions', icon: Receipt },
   { title: 'Relatórios', url: '/dashboard/reports', icon: TrendingUp },
   { title: 'Família', url: '/dashboard/family', icon: Users },
+  { title: 'Telegram', url: '/dashboard#telegram', icon: MessageCircle },
   { title: 'Configurações', url: '/dashboard/settings', icon: Settings },
 ];
 
