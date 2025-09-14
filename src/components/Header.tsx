@@ -35,11 +35,11 @@ const Header = () => {
             <a href="#about" className="text-foreground hover:text-primary transition-smooth">
               Sobre
             </a>
-            <Button variant="outline" size="sm">
-              Entrar
+            <Button variant="outline" size="sm" asChild>
+              <a href="/auth">Entrar</a>
             </Button>
-            <Button variant="hero" size="sm">
-              Começar Grátis
+            <Button variant="hero" size="sm" asChild>
+              <a href="/auth">Começar Grátis</a>
             </Button>
           </nav>
 
@@ -82,11 +82,11 @@ const Header = () => {
                 Sobre
               </a>
               <div className="flex flex-col space-y-2 pt-2">
-                <Button variant="outline" size="sm">
-                  Entrar
+                <Button variant="outline" size="sm" asChild>
+                  <a href="/auth">Entrar</a>
                 </Button>
-                <Button variant="hero" size="sm">
-                  Começar Grátis
+                <Button variant="hero" size="sm" asChild>
+                  <a href="/auth">Começar Grátis</a>
                 </Button>
               </div>
             </nav>
