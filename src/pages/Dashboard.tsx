@@ -5,6 +5,7 @@ import { Plus, TrendingUp, TrendingDown, DollarSign, Receipt } from 'lucide-reac
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import TelegramIntegration from '@/components/Dashboard/TelegramIntegration';
+import TestingGuide from '@/components/Dashboard/TestingGuide';
 
 interface DashboardStats {
   totalIncome: number;
@@ -21,11 +22,17 @@ const Dashboard = () => {
     const hash = window.location.hash.substring(1);
     if (hash === 'telegram') {
       setActiveSection('telegram');
+    } else if (hash === 'testing') {
+      setActiveSection('testing');
     }
   }, []);
 
   if (activeSection === 'telegram') {
     return <TelegramIntegration />;
+  }
+
+  if (activeSection === 'testing') {
+    return <TestingGuide />;
   }
   
   const { user } = useAuth();
@@ -111,7 +118,7 @@ const Dashboard = () => {
             Bem-vindo de volta! Aqui está um resumo das suas finanças.
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => window.location.href = '/dashboard/transactions/new'}>
           <Plus className="h-4 w-4" />
           Nova Transação
         </Button>
@@ -218,15 +225,27 @@ const Dashboard = () => {
             <CardTitle>Ações Rápidas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full justify-start gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start gap-2"
+              onClick={() => window.location.href = '/dashboard/transactions/new'}
+            >
               <Plus className="h-4 w-4" />
               Adicionar Receita
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start gap-2"
+              onClick={() => window.location.href = '/dashboard/transactions/new'}
+            >
               <Plus className="h-4 w-4" />
               Adicionar Despesa
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start gap-2"
+              onClick={() => window.location.href = '/dashboard/transactions'}
+            >
               <Receipt className="h-4 w-4" />
               Ver Todas as Transações
             </Button>

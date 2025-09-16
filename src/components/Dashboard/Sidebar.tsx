@@ -20,9 +20,9 @@ const menuItems = [
   { title: 'Nova Transação', url: '/dashboard/transactions/new', icon: Plus },
   { title: 'Transações', url: '/dashboard/transactions', icon: Receipt },
   { title: 'Relatórios', url: '/dashboard/reports', icon: TrendingUp },
-  { title: 'Família', url: '/dashboard/family', icon: Users },
   { title: 'Telegram', url: '/dashboard#telegram', icon: MessageCircle },
   { title: 'Configurações', url: '/dashboard/settings', icon: Settings },
+  { title: 'Guia de Testes', url: '/dashboard#testing', icon: Settings },
 ];
 
 export function DashboardSidebar() {
