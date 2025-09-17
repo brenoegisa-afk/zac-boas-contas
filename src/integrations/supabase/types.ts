@@ -141,6 +141,42 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_integrations: {
+        Row: {
+          created_at: string
+          id: string
+          telegram_first_name: string | null
+          telegram_last_name: string | null
+          telegram_user_id: number
+          telegram_username: string | null
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          telegram_first_name?: string | null
+          telegram_last_name?: string | null
+          telegram_user_id: number
+          telegram_username?: string | null
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          telegram_first_name?: string | null
+          telegram_last_name?: string | null
+          telegram_user_id?: number
+          telegram_username?: string | null
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
@@ -203,7 +239,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_families: {
+        Args: { user_uuid?: string }
+        Returns: {
+          family_id: string
+        }[]
+      }
+      is_family_admin: {
+        Args: { family_uuid: string; user_uuid?: string }
+        Returns: boolean
+      }
+      is_family_member: {
+        Args: { family_uuid: string; user_uuid?: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

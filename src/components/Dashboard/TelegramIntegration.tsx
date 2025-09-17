@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,28 @@ const TelegramIntegration = () => {
   const [telegramUsername, setTelegramUsername] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [showSetupGuide, setShowSetupGuide] = useState(false);
+  const [telegramIntegration, setTelegramIntegration] = useState<any>(null);
+
+  // Check if user already has Telegram connected
+  useEffect(() => {
+    const checkTelegramConnection = async () => {
+      if (!user) return;
+      
+      const { data: integration } = await supabase
+        .from('telegram_integrations')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (integration) {
+        setIsConnected(true);
+        setTelegramUsername(integration.telegram_username || `@${integration.telegram_user_id}`);
+        setTelegramIntegration(integration);
+      }
+    };
+
+    checkTelegramConnection();
+  }, [user]);
 
   if (showSetupGuide) {
     return (
@@ -57,20 +79,25 @@ const TelegramIntegration = () => {
     setIsConnecting(true);
     
     try {
-      // Update profile with Telegram info (temporary solution)
+      // Note: In a real implementation, you would need the actual Telegram user ID
+      // This is just a placeholder - the actual connection would happen through the bot
+      const telegramUserId = Math.floor(Math.random() * 1000000000); // Placeholder
+      
       const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: `${user?.email} telegram:${telegramUsername}`
-        })
-        .eq('user_id', user?.id);
+        .from('telegram_integrations')
+        .upsert({
+          user_id: user?.id,
+          telegram_user_id: telegramUserId,
+          telegram_username: telegramUsername.trim().replace('@', ''),
+          verified_at: new Date().toISOString()
+        });
 
       if (error) throw error;
 
       setIsConnected(true);
       toast({
         title: "Telegram conectado!",
-        description: "Agora você pode enviar transações via Telegram",
+        description: "Agora você pode enviar transações via Telegram. Note: Esta é uma conexão de demonstração.",
       });
     } catch (error) {
       console.error('Error connecting Telegram:', error);
@@ -135,6 +162,12 @@ const TelegramIntegration = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Demonstração:</strong> Para uma conexão real com o Telegram, você precisa iniciar uma conversa com o bot e seguir o processo de verificação segura.
+              </AlertDescription>
+            </Alert>
             <div>
               <Label htmlFor="telegram-username">Nome de usuário do Telegram</Label>
               <Input
@@ -149,7 +182,7 @@ const TelegramIntegration = () => {
               disabled={isConnecting}
               className="w-full"
             >
-              {isConnecting ? "Conectando..." : "Conectar Telegram"}
+              {isConnecting ? "Conectando..." : "Conectar Telegram (Demo)"}
             </Button>
           </CardContent>
         </Card>

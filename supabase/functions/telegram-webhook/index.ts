@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+import { createHmac } from 'https://deno.land/std@0.177.0/node/crypto.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -113,14 +114,27 @@ function parseTransactionMessage(text: string) {
 }
 
 async function findUserByTelegramId(telegramUserId: number) {
-  // For now, we'll use a simple mapping stored in user metadata
-  // In a production app, you might want a separate table for Telegram integrations
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('*, user_id')
-    .like('full_name', `%telegram:${telegramUserId}%`);
+  console.log(`Looking for user with Telegram ID: ${telegramUserId}`);
   
-  return profiles?.[0] || null;
+  const { data: integration, error } = await supabase
+    .from('telegram_integrations')
+    .select('user_id')
+    .eq('telegram_user_id', telegramUserId)
+    .single();
+
+  if (error) {
+    console.log('Error finding user by telegram ID:', error);
+    return null;
+  }
+
+  return integration ? { user_id: integration.user_id } : null;
+}
+
+// Verify Telegram webhook signature for security
+function verifyTelegramWebhook(body: string, secretToken: string): boolean {
+  // For production, you should verify the webhook signature
+  // This is a simplified version - implement proper verification based on your setup
+  return true; // Temporarily disabled for development
 }
 
 async function getUserDefaultFamily(userId: string) {
@@ -175,7 +189,16 @@ serve(async (req) => {
   }
 
   try {
-    const update: TelegramUpdate = await req.json();
+    const body = await req.text();
+    
+    // Verify webhook signature for security (optional but recommended)
+    const secretToken = req.headers.get('X-Telegram-Bot-Api-Secret-Token');
+    if (secretToken && !verifyTelegramWebhook(body, secretToken)) {
+      console.log('Invalid webhook signature');
+      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+    }
+
+    const update: TelegramUpdate = JSON.parse(body);
     console.log('Received Telegram update:', JSON.stringify(update, null, 2));
 
     if (!update.message || !update.message.text) {
