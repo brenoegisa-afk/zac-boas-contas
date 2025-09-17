@@ -272,7 +272,7 @@ const NewTransaction = () => {
                     </SelectItem>
                   ))}
                   {filteredCategories.length === 0 && (
-                    <SelectItem value="" disabled>
+                    <SelectItem value="no-categories" disabled>
                       Nenhuma categoria encontrada
                     </SelectItem>
                   )}
