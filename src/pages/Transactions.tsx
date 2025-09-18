@@ -144,7 +144,7 @@ const Transactions = () => {
             Gerencie e visualize todas as suas transações
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => window.location.href = '/dashboard/transactions/new'}>
           <Plus className="h-4 w-4" />
           Nova Transação
         </Button>

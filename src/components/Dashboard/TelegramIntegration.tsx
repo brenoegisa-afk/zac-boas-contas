@@ -10,6 +10,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import TelegramSetupGuide from "./TelegramSetupGuide";
+import AdminSetupGuide from "./AdminSetupGuide";
+import UserGuide from "./UserGuide";
 
 const TelegramIntegration = () => {
   const { toast } = useToast();
@@ -18,6 +20,8 @@ const TelegramIntegration = () => {
   const [telegramUsername, setTelegramUsername] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [showSetupGuide, setShowSetupGuide] = useState(false);
+  const [showAdminGuide, setShowAdminGuide] = useState(false);
+  const [showUserGuide, setShowUserGuide] = useState(false);
   const [telegramIntegration, setTelegramIntegration] = useState<any>(null);
 
   // Check if user already has Telegram connected
@@ -52,6 +56,36 @@ const TelegramIntegration = () => {
           ← Voltar para Integração
         </Button>
         <TelegramSetupGuide />
+      </div>
+    );
+  }
+
+  if (showAdminGuide) {
+    return (
+      <div>
+        <Button 
+          variant="outline" 
+          onClick={() => setShowAdminGuide(false)}
+          className="mb-4"
+        >
+          ← Voltar para Integração
+        </Button>
+        <AdminSetupGuide />
+      </div>
+    );
+  }
+
+  if (showUserGuide) {
+    return (
+      <div>
+        <Button 
+          variant="outline" 
+          onClick={() => setShowUserGuide(false)}
+          className="mb-4"
+        >
+          ← Voltar para Integração
+        </Button>
+        <UserGuide />
       </div>
     );
   }
@@ -290,18 +324,32 @@ const TelegramIntegration = () => {
           <CardTitle>Precisa de ajuda?</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" className="w-full">
-            <Bot className="h-4 w-4 mr-2" />
-            Guia de Configuração do Bot
-          </Button>
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={() => setShowSetupGuide(true)}
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Ver documentação completa
-          </Button>
+          <div className="grid gap-2 md:grid-cols-3">
+            <Button 
+              variant="outline" 
+              className="w-full gap-2"
+              onClick={() => setShowAdminGuide(true)}
+            >
+              <Bot className="h-4 w-4" />
+              Guia Admin
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full gap-2"
+              onClick={() => setShowUserGuide(true)}
+            >
+              <MessageCircle className="h-4 w-4" />
+              Guia Usuário
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full gap-2"
+              onClick={() => setShowSetupGuide(true)}
+            >
+              <ExternalLink className="h-4 w-4" />
+              Documentação
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

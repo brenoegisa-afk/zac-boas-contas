@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import TelegramIntegration from '@/components/Dashboard/TelegramIntegration';
 import TestingGuide from '@/components/Dashboard/TestingGuide';
+import FamilyOnboarding from '@/components/Dashboard/FamilyOnboarding';
+import QuickActions from '@/components/Dashboard/QuickActions';
 
 interface DashboardStats {
   totalIncome: number;
@@ -15,7 +17,16 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [hasFamily, setHasFamily] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalIncome: 0,
+    totalExpenses: 0,
+    balance: 0,
+    transactionCount: 0,
+  });
 
   // Check URL hash to determine active section
   useEffect(() => {
@@ -27,6 +38,62 @@ const Dashboard = () => {
     }
   }, []);
 
+  // Check if user has family and load stats
+  useEffect(() => {
+    const checkFamilyAndLoadStats = async () => {
+      if (!user) return;
+
+      try {
+        // Check if user has family
+        const { data: familyMembers } = await supabase
+          .from('family_members')
+          .select('family_id')
+          .eq('user_id', user.id);
+
+        const userHasFamily = familyMembers && familyMembers.length > 0;
+        setHasFamily(userHasFamily);
+
+        if (userHasFamily) {
+          const familyIds = familyMembers.map(fm => fm.family_id);
+
+          // Get transactions from user's families
+          const { data: transactions } = await supabase
+            .from('transactions')
+            .select('type, amount')
+            .in('family_id', familyIds);
+
+          if (transactions) {
+            const income = transactions
+              .filter(t => t.type === 'income')
+              .reduce((sum, t) => sum + Number(t.amount), 0);
+
+            const expenses = transactions
+              .filter(t => t.type === 'expense')
+              .reduce((sum, t) => sum + Number(t.amount), 0);
+
+            setStats({
+              totalIncome: income,
+              totalExpenses: expenses,
+              balance: income - expenses,
+              transactionCount: transactions.length,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error checking family and loading stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkFamilyAndLoadStats();
+  }, [user]);
+
+  const handleFamilyCreated = (familyId: string) => {
+    setHasFamily(true);
+    setLoading(false);
+  };
+
   if (activeSection === 'telegram') {
     return <TelegramIntegration />;
   }
@@ -34,72 +101,6 @@ const Dashboard = () => {
   if (activeSection === 'testing') {
     return <TestingGuide />;
   }
-  
-  const { user } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalIncome: 0,
-    totalExpenses: 0,
-    balance: 0,
-    transactionCount: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchDashboardStats = async () => {
-      if (!user) return;
-
-      try {
-        // Get user's families first
-        const { data: familyMembers } = await supabase
-          .from('family_members')
-          .select('family_id')
-          .eq('user_id', user.id);
-
-        if (!familyMembers || familyMembers.length === 0) {
-          setLoading(false);
-          return;
-        }
-
-        const familyIds = familyMembers.map(fm => fm.family_id);
-
-        // Get transactions from user's families
-        const { data: transactions } = await supabase
-          .from('transactions')
-          .select('type, amount')
-          .in('family_id', familyIds);
-
-        if (transactions) {
-          const income = transactions
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + Number(t.amount), 0);
-
-          const expenses = transactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + Number(t.amount), 0);
-
-          setStats({
-            totalIncome: income,
-            totalExpenses: expenses,
-            balance: income - expenses,
-            transactionCount: transactions.length,
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardStats();
-  }, [user]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(amount);
-  };
 
   if (loading) {
     return (
@@ -108,6 +109,18 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  // Show onboarding if user doesn't have a family
+  if (hasFamily === false) {
+    return <FamilyOnboarding onFamilyCreated={handleFamilyCreated} />;
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(amount);
+  };
 
   return (
     <div className="space-y-6">
@@ -220,41 +233,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Ações Rápidas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start gap-2"
-              onClick={() => window.location.href = '/dashboard/transactions/new'}
-            >
-              <Plus className="h-4 w-4" />
-              Adicionar Receita
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start gap-2"
-              onClick={() => window.location.href = '/dashboard/transactions/new'}
-            >
-              <Plus className="h-4 w-4" />
-              Adicionar Despesa
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start gap-2"
-              onClick={() => window.location.href = '/dashboard/transactions'}
-            >
-              <Receipt className="h-4 w-4" />
-              Ver Todas as Transações
-            </Button>
-            <Button variant="outline" className="w-full justify-start gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Gerar Relatório
-            </Button>
-          </CardContent>
-        </Card>
+        <QuickActions />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,12 +33,16 @@ const NewTransaction = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [familyId, setFamilyId] = useState<string | null>(null);
   
+  // Get initial transaction type from URL params
+  const initialType = searchParams.get('type') === 'income' ? 'income' : 'expense';
+  
   const [formData, setFormData] = useState<FormData>({
-    type: 'expense',
+    type: initialType,
     amount: '',
     description: '',
     category_id: '',
@@ -164,7 +168,7 @@ const NewTransaction = () => {
           onClick={() => navigate('/dashboard')}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
+          Voltar ao Dashboard
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Nova Transação</h1>
