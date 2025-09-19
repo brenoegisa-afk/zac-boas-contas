@@ -245,12 +245,20 @@ export type Database = {
           family_id: string
         }[]
       }
+      get_user_family_ids: {
+        Args: { user_uuid?: string }
+        Returns: string[]
+      }
       is_family_admin: {
         Args: { family_uuid: string; user_uuid?: string }
         Returns: boolean
       }
       is_family_member: {
         Args: { family_uuid: string; user_uuid?: string }
+        Returns: boolean
+      }
+      is_user_family_admin: {
+        Args: { target_family_id: string; user_uuid?: string }
         Returns: boolean
       }
     }
