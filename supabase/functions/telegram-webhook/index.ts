@@ -54,8 +54,17 @@ async function sendTelegramMessage(chatId: number, text: string) {
 }
 
 function parseTransactionMessage(text: string) {
-  // Remove extra spaces and convert to lowercase
-  const normalizedText = text.trim().toLowerCase();
+  // Security: Input sanitization and validation
+  if (!text || typeof text !== 'string') {
+    return null;
+  }
+  
+  // Remove potentially dangerous characters and limit length
+  const sanitizedText = text
+    .trim()
+    .substring(0, 500) // Limit message length
+    .replace(/[<>\"'&]/g, '') // Remove potentially dangerous characters
+    .toLowerCase();
   
   // Patterns for different transaction formats
   const patterns = [
@@ -68,7 +77,7 @@ function parseTransactionMessage(text: string) {
   ];
 
   for (const pattern of patterns) {
-    const match = normalizedText.match(pattern);
+    const match = sanitizedText.match(pattern);
     if (match) {
       let type: 'income' | 'expense';
       let amount: number;
@@ -114,27 +123,65 @@ function parseTransactionMessage(text: string) {
 }
 
 async function findUserByTelegramId(telegramUserId: number) {
-  console.log(`Looking for user with Telegram ID: ${telegramUserId}`);
-  
-  const { data: integration, error } = await supabase
-    .from('telegram_integrations')
-    .select('user_id')
-    .eq('telegram_user_id', telegramUserId)
-    .single();
-
-  if (error) {
-    console.log('Error finding user by telegram ID:', error);
+  // Security: Validate input
+  if (!telegramUserId || typeof telegramUserId !== 'number' || telegramUserId <= 0) {
+    console.log('Invalid Telegram user ID provided');
     return null;
   }
+  
+  console.log(`Looking for user with Telegram ID: ${telegramUserId}`);
+  
+  try {
+    const { data: integration, error } = await supabase
+      .from('telegram_integrations')
+      .select('user_id, verified_at')
+      .eq('telegram_user_id', telegramUserId)
+      .not('verified_at', 'is', null) // Only verified integrations
+      .single();
 
-  return integration ? { user_id: integration.user_id } : null;
+    if (error) {
+      console.log('Error finding user by telegram ID:', error);
+      return null;
+    }
+
+    return integration ? { user_id: integration.user_id } : null;
+  } catch (error) {
+    console.error('Database error in findUserByTelegramId:', error);
+    return null;
+  }
 }
 
 // Verify Telegram webhook signature for security
 function verifyTelegramWebhook(body: string, secretToken: string): boolean {
-  // For production, you should verify the webhook signature
-  // This is a simplified version - implement proper verification based on your setup
-  return true; // Temporarily disabled for development
+  if (!secretToken || !TELEGRAM_BOT_TOKEN) {
+    console.log('Missing secret token or bot token for verification');
+    return false;
+  }
+  
+  try {
+    // Create HMAC-SHA256 hash of the request body using bot token
+    const expectedHash = createHmac('sha256', TELEGRAM_BOT_TOKEN)
+      .update(body)
+      .digest('hex');
+    
+    // Compare with provided secret token
+    const providedHash = secretToken.replace('sha256=', '');
+    
+    // Use timing-safe comparison to prevent timing attacks
+    if (expectedHash.length !== providedHash.length) {
+      return false;
+    }
+    
+    let result = 0;
+    for (let i = 0; i < expectedHash.length; i++) {
+      result |= expectedHash.charCodeAt(i) ^ providedHash.charCodeAt(i);
+    }
+    
+    return result === 0;
+  } catch (error) {
+    console.error('Error verifying webhook signature:', error);
+    return false;
+  }
 }
 
 async function getUserDefaultFamily(userId: string) {
@@ -191,24 +238,33 @@ serve(async (req) => {
   try {
     const body = await req.text();
     
-    // Verify webhook signature for security (optional but recommended)
+    // Security: Verify webhook signature
     const secretToken = req.headers.get('X-Telegram-Bot-Api-Secret-Token');
-    if (secretToken && !verifyTelegramWebhook(body, secretToken)) {
-      console.log('Invalid webhook signature');
+    if (!verifyTelegramWebhook(body, secretToken || '')) {
+      console.log('Invalid or missing webhook signature');
       return new Response('Unauthorized', { status: 401, headers: corsHeaders });
     }
 
-    const update: TelegramUpdate = JSON.parse(body);
+    // Security: Parse and validate incoming data
+    let update: TelegramUpdate;
+    try {
+      update = JSON.parse(body);
+    } catch (error) {
+      console.log('Invalid JSON in webhook body');
+      return new Response('Bad Request', { status: 400, headers: corsHeaders });
+    }
+    
     console.log('Received Telegram update:', JSON.stringify(update, null, 2));
 
-    if (!update.message || !update.message.text) {
+    // Security: Validate required fields
+    if (!update.message || !update.message.text || !update.message.from) {
       return new Response('OK', { headers: corsHeaders });
     }
 
     const message = update.message;
     const chatId = message.chat.id;
     const telegramUserId = message.from.id;
-    const messageText = message.text;
+    const messageText = message.text.trim().substring(0, 1000); // Limit message length
 
     // Check if this is a command
     if (messageText.startsWith('/')) {

@@ -27,7 +27,34 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signIn(signInForm.email, signInForm.password);
+    // Security: Input validation and sanitization
+    const email = signInForm.email.trim().toLowerCase();
+    const password = signInForm.password;
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Erro de validação",
+        description: "Por favor, insira um email válido",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Password length validation
+    if (password.length < 6) {
+      toast({
+        title: "Erro de validação",
+        description: "A senha deve ter pelo menos 6 caracteres",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await signIn(email, password);
     
     if (error) {
       toast({
@@ -51,7 +78,49 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signUp(signUpForm.email, signUpForm.password, signUpForm.fullName);
+    // Security: Input validation and sanitization
+    const email = signUpForm.email.trim().toLowerCase();
+    const password = signUpForm.password;
+    const fullName = signUpForm.fullName.trim();
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Erro de validação",
+        description: "Por favor, insira um email válido",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Password strength validation
+    if (password.length < 8) {
+      toast({
+        title: "Erro de validação",
+        description: "A senha deve ter pelo menos 8 caracteres",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Name validation
+    if (fullName.length < 2 || fullName.length > 100) {
+      toast({
+        title: "Erro de validação",
+        description: "O nome deve ter entre 2 e 100 caracteres",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Sanitize name (remove potentially dangerous characters)
+    const sanitizedName = fullName.replace(/[<>\"'&]/g, '');
+
+    const { error } = await signUp(email, password, sanitizedName);
     
     if (error) {
       toast({

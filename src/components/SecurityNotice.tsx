@@ -7,14 +7,16 @@ const SecurityNotice = () => {
   return (
     <Alert className="border-green-200 bg-green-50">
       <Shield className="h-4 w-4 text-green-600" />
-      <AlertTitle className="text-green-800">Security Updates Applied</AlertTitle>
+      <AlertTitle className="text-green-800">✅ Configurações de Segurança Aplicadas</AlertTitle>
       <AlertDescription className="text-green-700 space-y-2">
-        <p>We've implemented several security improvements to protect your data:</p>
+        <p>Implementamos várias melhorias de segurança para proteger seus dados:</p>
         <ul className="list-disc list-inside space-y-1 text-sm">
-          <li>Fixed database security policies to prevent unauthorized access</li>
-          <li>Improved Telegram bot authentication with secure user mapping</li>
-          <li>Enhanced input validation across all forms</li>
-          <li>Added webhook security verification</li>
+          <li>✅ Políticas de segurança do banco corrigidas (RLS)</li>
+          <li>✅ Autenticação do bot Telegram com mapeamento seguro de usuários</li>
+          <li>✅ Validação aprimorada de entrada em todos os formulários</li>
+          <li>✅ Verificação de segurança de webhook implementada</li>
+          <li>✅ Sanitização de dados para prevenir ataques XSS</li>
+          <li>✅ Validação de entrada para prevenir SQL injection</li>
         </ul>
         <div className="pt-2">
           <Button variant="outline" size="sm" asChild>

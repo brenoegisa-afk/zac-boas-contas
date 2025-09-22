@@ -112,10 +112,51 @@ const NewTransaction = () => {
       return;
     }
 
-    if (!formData.amount || !formData.description) {
+    // Security: Enhanced input validation
+    const amount = parseFloat(formData.amount.replace(',', '.'));
+    const description = formData.description.trim();
+    const notes = formData.notes.trim();
+
+    // Validate amount
+    if (!formData.amount || isNaN(amount) || amount <= 0 || amount > 999999999) {
       toast({
-        title: 'Erro',
-        description: 'Preencha todos os campos obrigatórios',
+        title: 'Erro de validação',
+        description: 'Por favor, insira um valor válido (maior que 0 e menor que 1 bilhão)',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate description
+    if (!description || description.length < 2 || description.length > 200) {
+      toast({
+        title: 'Erro de validação',
+        description: 'A descrição deve ter entre 2 e 200 caracteres',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate transaction date
+    const transactionDate = new Date(formData.transaction_date);
+    const today = new Date();
+    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+    const oneYearFromNow = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+
+    if (transactionDate < oneYearAgo || transactionDate > oneYearFromNow) {
+      toast({
+        title: 'Erro de validação',
+        description: 'A data da transação deve estar entre 1 ano atrás e 1 ano no futuro',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate notes length
+    if (notes.length > 500) {
+      toast({
+        title: 'Erro de validação',
+        description: 'As observações não podem exceder 500 caracteres',
         variant: 'destructive',
       });
       return;
@@ -124,6 +165,10 @@ const NewTransaction = () => {
     setLoading(true);
 
     try {
+      // Security: Sanitize inputs before database insertion
+      const sanitizedDescription = description.replace(/[<>\"'&]/g, '');
+      const sanitizedNotes = notes.replace(/[<>\"'&]/g, '');
+
       const { error } = await supabase
         .from('transactions')
         .insert({
@@ -131,9 +176,9 @@ const NewTransaction = () => {
           user_id: user?.id,
           category_id: formData.category_id || null,
           type: formData.type,
-          amount: parseFloat(formData.amount.replace(',', '.')),
-          description: formData.description,
-          notes: formData.notes || null,
+          amount: amount,
+          description: sanitizedDescription,
+          notes: sanitizedNotes || null,
           transaction_date: formData.transaction_date,
         });
 
