@@ -80,6 +80,9 @@ All colors MUST be HSL. Inspired by trust, prosperity and Christian values.
 
     --sidebar-ring: 217.2 91.2% 59.8%;
 
+    /* Subtle background gradient */
+    --gradient-subtle: linear-gradient(135deg, hsl(240 10% 97%) 0%, hsl(240 10% 95%) 100%);
+
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -131,6 +134,9 @@ All colors MUST be HSL. Inspired by trust, prosperity and Christian values.
     --shadow-elegant: 0 10px 30px -10px hsl(0 0% 0% / 0.4);
     --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
     --shadow-glow: 0 0 40px hsl(221 83% 75% / 0.3);
+    
+    /* Dark mode subtle background */
+    --gradient-subtle: linear-gradient(135deg, hsl(222.2 84% 4.9%) 0%, hsl(217.2 32.6% 17.5%) 100%);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -149,5 +155,36 @@ All colors MUST be HSL. Inspired by trust, prosperity and Christian values.
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Custom scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  
+  .scrollbar-thumb-border {
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  
+  .scrollbar-track-transparent {
+    scrollbar-track-color: transparent;
+  }
+
+  /* Webkit scrollbar for better browser support */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
   }
 }
