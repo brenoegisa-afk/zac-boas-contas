@@ -39,8 +39,8 @@ const menuItems = [
     description: 'Histórico de movimentações'
   },
   { 
-    title: 'Relatórios', 
-    url: '/dashboard/reports', 
+    title: 'Analytics', 
+    url: '/dashboard/analytics', 
     icon: BarChart3,
     description: 'Análises e gráficos'
   },
