@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      budgets: {
+        Row: {
+          amount: number
+          category_id: string
+          created_at: string
+          family_id: string
+          id: string
+          month: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          amount: number
+          category_id: string
+          created_at?: string
+          family_id: string
+          id?: string
+          month: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          category_id?: string
+          created_at?: string
+          family_id?: string
+          id?: string
+          month?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           color: string | null
@@ -239,16 +287,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_budget_status: {
+        Args: { p_family_id: string; p_month: number; p_year: number }
+        Returns: {
+          budgeted_amount: number
+          category_color: string
+          category_icon: string
+          category_id: string
+          category_name: string
+          spent_amount: number
+        }[]
+      }
       get_user_families: {
         Args: { user_uuid?: string }
         Returns: {
           family_id: string
         }[]
       }
-      get_user_family_ids: {
-        Args: { user_uuid?: string }
-        Returns: string[]
-      }
+      get_user_family_ids: { Args: { user_uuid?: string }; Returns: string[] }
       is_family_admin: {
         Args: { family_uuid: string; user_uuid?: string }
         Returns: boolean
