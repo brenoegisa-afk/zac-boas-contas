@@ -5,12 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Search, Filter, Trash2, Edit, Calendar } from 'lucide-react';
+import { Plus, Search, Filter, Trash2, Edit, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { EditTransactionDialog } from '@/components/Dashboard/EditTransactionDialog';
+import { useNavigate } from 'react-router-dom';
 
 interface Transaction {
   id: string;
@@ -32,10 +36,15 @@ interface Transaction {
 const Transactions = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTransactions();
@@ -86,16 +95,23 @@ const Transactions = () => {
     }
   };
 
-  const deleteTransaction = async (id: string) => {
+  const handleDeleteClick = (id: string) => {
+    setTransactionToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!transactionToDelete) return;
+
     try {
       const { error } = await supabase
         .from('transactions')
         .delete()
-        .eq('id', id);
+        .eq('id', transactionToDelete);
 
       if (error) throw error;
 
-      setTransactions(transactions.filter(t => t.id !== id));
+      setTransactions(transactions.filter(t => t.id !== transactionToDelete));
       toast({
         title: 'Sucesso',
         description: 'Transação excluída com sucesso',
@@ -107,6 +123,9 @@ const Transactions = () => {
         description: 'Erro ao excluir transação',
         variant: 'destructive',
       });
+    } finally {
+      setDeleteDialogOpen(false);
+      setTransactionToDelete(null);
     }
   };
 
@@ -206,7 +225,7 @@ const Transactions = () => {
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
-                        <Calendar className="h-8 w-8 text-muted-foreground" />
+                        <Search className="h-8 w-8 text-muted-foreground" />
                         <p className="text-muted-foreground">
                           {searchTerm || typeFilter !== 'all' 
                             ? 'Nenhuma transação encontrada com os filtros aplicados'
@@ -257,15 +276,14 @@ const Transactions = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-1 justify-end">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="icon" onClick={() => setSelectedTransaction(transaction)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => setEditingTransaction(transaction)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => deleteTransaction(transaction.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(transaction.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                       </TableCell>
@@ -311,6 +329,78 @@ const Transactions = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Transaction Details Dialog */}
+      <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Detalhes da Transação</DialogTitle>
+          </DialogHeader>
+          {selectedTransaction && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Tipo</label>
+                <p className="mt-1">
+                  <Badge variant={selectedTransaction.type === 'income' ? 'default' : 'destructive'}>
+                    {selectedTransaction.type === 'income' ? 'Receita' : 'Despesa'}
+                  </Badge>
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Descrição</label>
+                <p className="mt-1 text-foreground">{selectedTransaction.description}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Valor</label>
+                <p className={`mt-1 text-lg font-bold ${selectedTransaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(selectedTransaction.amount)}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Data</label>
+                <p className="mt-1 text-foreground">{formatDate(selectedTransaction.transaction_date)}</p>
+              </div>
+              {selectedTransaction.categories && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Categoria</label>
+                  <p className="mt-1 text-foreground">{selectedTransaction.categories.name}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Transaction Dialog */}
+      {editingTransaction && (
+        <EditTransactionDialog
+          transaction={editingTransaction}
+          open={!!editingTransaction}
+          onOpenChange={(open) => !open && setEditingTransaction(null)}
+          onSuccess={() => {
+            setEditingTransaction(null);
+            fetchTransactions();
+          }}
+        />
+      )}
     </div>
   );
 };
