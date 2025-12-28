@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Settings as SettingsIcon, Users, UserPlus, Trash2, Shield, User } from 'lucide-react';
+import CategoryManagement from '@/components/Dashboard/CategoryManagement';
 
 interface Family {
   id: string;
@@ -329,6 +330,9 @@ const Settings = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Category Management */}
+      <CategoryManagement />
     </div>
   );
 };

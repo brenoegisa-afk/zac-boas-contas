@@ -1,4 +1,4 @@
-import { Home, Plus, Receipt, TrendingUp, Users, Settings, LogOut, MessageCircle, BarChart3, Sparkles } from 'lucide-react';
+import { Home, Plus, Receipt, TrendingUp, Users, Settings, LogOut, MessageCircle, BarChart3, Sparkles, Wallet } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Sidebar,
@@ -37,6 +37,12 @@ const menuItems = [
     url: '/dashboard/transactions', 
     icon: Receipt,
     description: 'Histórico de movimentações'
+  },
+  { 
+    title: 'Orçamentos', 
+    url: '/dashboard/budgets', 
+    icon: Wallet,
+    description: 'Limites de gastos mensais'
   },
   { 
     title: 'Analytics', 
