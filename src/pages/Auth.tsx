@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, ArrowLeft } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import SecurityNotice from '@/components/SecurityNotice';
 
 const Auth = () => {
@@ -17,6 +18,9 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [signInForm, setSignInForm] = useState({ email: '', password: '' });
   const [signUpForm, setSignUpForm] = useState({ email: '', password: '', fullName: '' });
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   // Redirect if already authenticated
   if (!loading && user) {
@@ -140,10 +144,123 @@ const Auth = () => {
     setIsLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, insira um email válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim().toLowerCase(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Erro ao enviar email",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      setResetEmailSent(true);
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Forgot Password View
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-subtle p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center relative">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute left-4 top-4"
+              onClick={() => {
+                setShowForgotPassword(false);
+                setResetEmailSent(false);
+                setResetEmail('');
+              }}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mt-8">
+              <Mail className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">Recuperar Senha</CardTitle>
+            <CardDescription>
+              {resetEmailSent 
+                ? "Verifique seu email para continuar"
+                : "Digite seu email para receber um link de recuperação"
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {resetEmailSent ? (
+              <div className="text-center space-y-4">
+                <p className="text-muted-foreground">
+                  Enviamos um link de recuperação para <strong>{resetEmail}</strong>. 
+                  Verifique sua caixa de entrada e spam.
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    setResetEmailSent(false);
+                    setResetEmail('');
+                  }}
+                >
+                  Tentar outro email
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    'Enviar link de recuperação'
+                  )}
+                </Button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -207,6 +324,14 @@ const Auth = () => {
                   >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Entrar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="w-full text-sm"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Esqueceu sua senha?
                   </Button>
                 </form>
               </CardContent>
