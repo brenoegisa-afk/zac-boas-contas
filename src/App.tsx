@@ -13,6 +13,7 @@ import Transactions from "./pages/Transactions";
 import NewTransaction from "./pages/NewTransaction";
 import Settings from "./pages/Settings";
 import Analytics from "./pages/Analytics";
+import Budgets from "./pages/Budgets";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./pages/DashboardLayout";
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="transactions" element={<Transactions />} />
             <Route path="transactions/new" element={<NewTransaction />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="budgets" element={<Budgets />} />
             <Route path="settings" element={<Settings />} />
           </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
